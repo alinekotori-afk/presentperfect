@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desafio Sinistro: Present Perfect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Cinzel:wght@600;700&family=Inter:wght@400;600&display=swap');
+        .font-creepy { font-family: 'Creepster', cursive, sans-serif; }
+        .font-cinzel { font-family: 'Cinzel', serif; }
+        .bg-horror {
+            background: radial-gradient(circle at center, #1a0b2e 0%, #090314 100%);
+        }
+        .glow-red {
+            box-shadow: 0 0 20px rgba(220, 38, 38, 0.4);
+        }
+        .glow-purple {
+            box-shadow: 0 0 25px rgba(147, 51, 234, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-horror text-gray-100 min-h-screen flex flex-col items-center justify-center p-4 font-sans select-none">
+
+    <!-- Audio Control Bar -->
+    <div class="absolute top-4 right-4 flex items-center space-x-2 bg-black/40 border border-purple-900/50 px-4 py-2 rounded-full backdrop-blur-md">
+        <i class="fa-solid fa-music text-purple-400 animate-pulse"></i>
+        <span class="text-xs text-purple-200 font-cinzel">Trilha Sinistra</span>
+        <button id="toggleAudio" onclick="toggleBackgroundMusic()" class="bg-purple-900/80 hover:bg-purple-800 text-purple-200 text-xs px-3 py-1 rounded-full border border-purple-600 transition">
+            Ligar Som
+        </button>
+    </div>
+
+    <!-- Main Container -->
+    <div id="app" class="w-full max-w-2xl bg-gray-950/80 border border-purple-900/60 rounded-2xl glow-purple p-6 md:p-8 backdrop-blur-xl relative overflow-hidden">
+        
+        <!-- Welcome Screen -->
+        <div id="welcomeScreen" class="text-center py-6">
+            <h1 class="font-creepy text-5xl md:text-6xl text-red-600 tracking-wider mb-4 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)]">
+                Present Perfect: Pesadelo Gramatical
+            </h1>
+            <p class="text-gray-300 font-cinzel text-sm md:text-base mb-8 max-w-md mx-auto">
+                Teste seus conhecimentos sobre o Present Perfect (experiências de vida, períodos contínuos e tempos inacabados). Você tem <span class="text-red-400 font-bold">40 segundos</span> por questão. Fuja das armadilhas!
+            </p>
+            <button onclick="startGame()" class="bg-red-700 hover:bg-red-600 text-white font-cinzel font-bold px-8 py-3 rounded-xl shadow-lg glow-red transition transform hover:scale-105 active:scale-95 text-lg">
+                <i class="fa-solid fa-skull mr-2"></i> Iniciar Desafio
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quizScreen" class="hidden">
+            <!-- Header status -->
+            <div class="flex justify-between items-center mb-6 border-b border-purple-900/40 pb-4">
+                <span id="questionCounter" class="text-purple-400 font-cinzel text-sm">Questão 1 de 10</span>
+                <div class="flex items-center space-x-2 bg-red-950/60 border border-red-800 px-3 py-1 rounded-full">
+                    <i class="fa-solid fa-hourglass-half text-red-400 animate-spin"></i>
+                    <span id="timer" class="font-mono text-red-300 font-bold text-lg">40</span>s
+                </div>
+                <span id="scoreDisplay" class="text-purple-300 font-cinzel text-sm">Pontos: 0</span>
+            </div>
+
+            <!-- Timer Bar -->
+            <div class="w-full bg-gray-900 h-2 rounded-full mb-6 overflow-hidden border border-purple-900/30">
+                <div id="timerBar" class="bg-red-600 h-full w-full transition-all duration-1000 linear"></div>
+            </div>
+
+            <!-- Question Box -->
+            <div class="mb-6">
+                <h2 id="questionText" class="text-xl md:text-2xl font-cinzel font-bold text-white mb-2 leading-snug"></h2>
+                <p id="questionContext" class="text-xs text-purple-400 italic"></p>
+            </div>
+
+            <!-- Options Grid -->
+            <div id="optionsContainer" class="grid grid-cols-1 gap-3 mb-6"></div>
+
+            <!-- Feedback Area -->
+            <div id="feedbackBox" class="hidden p-4 rounded-xl text-sm mb-4 border transition-all"></div>
+
+            <!-- Next Button -->
+            <button id="nextBtn" onclick="nextQuestion()" class="hidden w-full bg-purple-900 hover:bg-purple-800 text-purple-100 font-cinzel font-bold py-3 rounded-xl border border-purple-600 transition shadow-lg">
+                Próxima Pergunta <i class="fa-solid fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameOverScreen" class="hidden text-center py-8">
+            <h2 class="font-creepy text-5xl text-red-600 mb-4">Fim do Jogo</h2>
+            <div class="bg-purple-950/40 border border-purple-900/50 p-6 rounded-2xl mb-6 max-w-sm mx-auto">
+                <p class="text-gray-300 font-cinzel text-sm mb-2">Sua pontuação final:</p>
+                <p id="finalScore" class="font-cinzel text-4xl text-white font-bold mb-4">0 / 10</p>
+                <p id="finalMessage" class="text-purple-300 text-xs italic"></p>
+            </div>
+            <button onclick="startGame()" class="bg-red-700 hover:bg-red-600 text-white font-cinzel font-bold px-8 py-3 rounded-xl shadow-lg glow-red transition transform hover:scale-105">
+                <i class="fa-solid fa-rotate-right mr-2"></i> Tentar Novamente
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-6 text-xs text-purple-500/60 font-cinzel">
+        Baseado na Apresentação Oficial "Present Perfect (Have Done)"
+    </footer>
+
+    <script>
+        // Questions Array based on the PPT presentation
+        const questions = [
+            {
+                question: "Qual opção preenche corretamente a lacuna na frase sobre experiências de vida? \n\n'She _____ visited China twice.'",
+                context: "Uso 1: Experiências de vida (Terceira pessoa do singular)",
+                options: [
+                    { text: "have", isCorrect: false, rationale: "Usa-se 'have' apenas para I, you, we e they. Para 'she' emprega-se 'has'." },
+                    { text: "has", isCorrect: true, rationale: "Correto! Na terceira pessoa do singular (he, she, it), o auxiliar correto no Present Perfect é 'has'." },
+                    { text: "had", isCorrect: false, rationale: "'had' é o passado simples ou particípio passado do verbo have, incorreto como auxiliar aqui." },
+                    { text: "is", isCorrect: false, rationale: "'is' é do verbo to be e não forma o Present Perfect." }
+                ]
+            },
+            {
+                question: "Complete a pergunta sobre experiências de vida utilizando 'ever':\n\n'Have you _____ eaten caviar?'",
+                context: "Uso 1: Perguntas com ever",
+                options: [
+                    { text: "eat", isCorrect: false, rationale: "'eat' é a forma base (infinitivo) do verbo." },
+                    { text: "ate", isCorrect: false, rationale: "'ate' é a forma do Simple Past (passado simples)." },
+                    { text: "eaten", isCorrect: true, rationale: "Correto! O particípio passado (third form) do verbo eat é eaten (eat-ate-eaten)." },
+                    { text: "eating", isCorrect: false, rationale: "O gerúndio (-ing) não é utilizado na estrutura do Present Perfect." }
+                ]
+            },
+            {
+                question: "Escolha a alternativa correta para expressar um período de tempo inacabado (hoje):\n\n'I _____ drunk four cups of coffee today.'",
+                context: "Uso 3: Períodos de tempo inacabados",
+                options: [
+                    { text: "has", isCorrect: false, rationale: "O pronome 'I' exige o auxiliar 'have', não 'has'." },
+                    { text: "have", isCorrect: true, rationale: "Correto! Com o sujeito 'I', utilizamos o auxiliar 'have' seguido do particípio 'drunk'." },
+                    { text: "had", isCorrect: false, rationale: "Falta o auxiliar principal do Present Perfect antes do particípio." },
+                    { text: "haven't", isCorrect: false, rationale: "Muda o sentido para negativo, o que contradiz o contexto de ter tomado 4 xícaras." }
+                ]
+            },
+            {
+                question: "Complete a frase indicando um período que continua até agora (uso de 'so far'):\n\n'Everything is going well. We _____ any problems so far.'",
+                context: "Uso 2: Período continuando até agora",
+                options: [
+                    { text: "have had", isCorrect: false, rationale: "Significaria que tivemos problemas até agora, o que contradiz 'Everything is going well'." },
+                    { text: "haven't had", isCorrect: true, rationale: "Correto! Expressa que não tivemos nenhum problema desde o início do período até o momento atual." },
+                    { text: "hasn't had", isCorrect: false, rationale: "O sujeito 'We' é plural e requer 'have', nunca 'has'." },
+                    { text: "didn't have", isCorrect: false, rationale: "O Simple Past indica ação concluída no passado, inadequado com 'so far'." }
+                ]
+            },
+            {
+                question: "Complete a estrutura com a expressão 'It's the first time...':\n\n'It's the first time he _____ driven a car.'",
+                context: "Uso 4: The First, Second, or Third Time",
+                options: [
+                    { text: "have", isCorrect: false, rationale: "O sujeito é 'he', portanto o auxiliar deve ser 'has'." },
+                    { text: "has", isCorrect: true, rationale: "Correto! Após 'It's the first time...', usamos o Present Perfect com 'has' para o sujeito 'he'." },
+                    { text: "is", isCorrect: false, rationale: "O verbo auxiliar exigido por essa estrutura é o have/has, não o verbo to be." },
+                    { text: "had", isCorrect: false, rationale: "Utiliza-se o presente perfeito (has driven) em relação ao presente." }
+                ]
+            },
+            {
+                question: "Qual o particípio passado correto do verbo irregular 'see'?\n\n'She has _____ the film eight times.'",
+                context: "Verbos Irregulares Comuns",
+                options: [
+                    { text: "saw", isCorrect: false, rationale: "'saw' é a forma de passado simples." },
+                    { text: "seed", isCorrect: false, rationale: "Esta forma não existe na gramática inglesa." },
+                    { text: "seen", isCorrect: true, rationale: "Correto! A terceira forma (particípio passado) do verbo see é seen (see-saw-seen)." },
+                    { text: "seeing", isCorrect: false, rationale: "Gerúndio incorreto para esta estrutura." }
+                ]
+            },
+            {
+                question: "Identifique a forma negativa correta para a terceira pessoa do singular:\n\n'He _____ read Hamlet.'",
+                context: "Formas Negativas e Sujeitos",
+                options: [
+                    { text: "haven't", isCorrect: false, rationale: "'haven't' é usado com I, you, we, they." },
+                    { text: "hasn't", isCorrect: true, rationale: "Correto! A contração da negativa com 'he' é 'hasn't' (has not)." },
+                    { text: "don't have", isCorrect: false, rationale: "Uso incorreto de auxiliar do Present Simple." },
+                    { text: "didn't", isCorrect: false, rationale: "Inadequado para o Present Perfect." }
+                ]
+            },
+            {
+                question: "Escolha a forma interrogativa correta para o sujeito plural 'they':\n\n'_____ they worked together recently?'",
+                context: "Formas Interrogativas",
+                options: [
+                    { text: "Has", isCorrect: false, rationale: "'Has' é restrito a he, she e it." },
+                    { text: "Have", isCorrect: true, rationale: "Correto! Em perguntas no Present Perfect com 'they', o auxiliar 'Have' inicia a frase." },
+                    { text: "Do", isCorrect: false, rationale: "'Do' pertence ao Simple Present." },
+                    { text: "Did", isCorrect: false, rationale: "'Did' pertence ao Simple Past." }
+                ]
+            },
+            {
+                question: "Complete a lacuna com a expressão correta para tempo inacabado:\n\n'I haven't seen Tom _____ morning. Have you?'",
+                context: "Uso 3: Unfinished Time Periods (this morning)",
+                options: [
+                    { text: "last", isCorrect: false, rationale: "'last' indicaria um momento concluído no passado (ex: last morning não é idiomático)." },
+                    { text: "this", isCorrect: true, rationale: "Correto! Expressões com 'this' (this morning, this year) quando o período ainda não terminou exigem Present Perfect." },
+                    { text: "yesterday", isCorrect: false, rationale: "'yesterday' pede Simple Past pois o dia já terminou." },
+                    { text: "that", isCorrect: false, rationale: "Pronome demonstrativo incorreto para este contexto temporal." }
+                ]
+            },
+            {
+                question: "Qual o particípio passado do verbo irregular 'do'?\n\n'We have _____ our homework.'",
+                context: "Verbos Irregulares Comuns (do-did-done)",
+                options: [
+                    { text: "did", isCorrect: false, rationale: "'did' é o passado simples." },
+                    { text: "does", isCorrect: false, rationale: "'does' é usado no Present Simple para terceira pessoa." },
+                    { text: "done", isCorrect: true, rationale: "Correto! O particípio passado de do é done (do-did-done)." },
+                    { text: "doing", isCorrect: false, rationale: "Forma de gerúndio incorreta." }
+                ]
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let timer = 40;
+        let timerInterval = null;
+        let answered = false;
+
+        // Web Audio API Synthesizer for Sinister Background Music & SFX
+        let audioCtx = null;
+        let musicPlaying = false;
+        let musicInterval = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function toggleBackgroundMusic() {
+            initAudio();
+            const btn = document.getElementById('toggleAudio');
+            if (musicPlaying) {
+                stopSpookyMusic();
+                btn.textContent = "Ligar Som";
+                btn.classList.replace('bg-red-900', 'bg-purple-900');
+                musicPlaying = false;
+            } else {
+                startSpookyMusic();
+                btn.textContent = "Desligar Som";
+                btn.classList.replace('bg-purple-900', 'bg-red-900');
+                musicPlaying = true;
+            }
+        }
+
+        function startSpookyMusic() {
+            if (musicInterval) clearInterval(musicInterval);
+            
+            // Creepy ambient drone / low minor notes sequence
+            const notes = [110, 116.54, 130.81, 98.00]; // A2, Bb2, C3, G2 (sinister minor flavor)
+            let index = 0;
+
+            playDroneNote(notes[0]);
+            musicInterval = setInterval(() => {
+                index = (index + 1) % notes.length;
+                playDroneNote(notes[index]);
+            }, 6000);
+        }
+
+        function playDroneNote(freq) {
+            if (!audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+                // Filter for eerie muffled horror effect
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(300, audioCtx.currentTime);
+
+                gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 2);
+                gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 5.8);
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + 6);
+            } catch(e) {
+                console.log(e);
+            }
+        }
+
+        function stopSpookyMusic() {
+            if (musicInterval) {
+                clearInterval(musicInterval);
+                musicInterval = null;
+            }
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'correct') {
+                    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                } else if (type === 'wrong') {
+                    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.4);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.4);
+                }
+            } catch(e) {}
+        }
+
+        function startGame() {
+            initAudio();
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.remove('hidden');
+            currentQuestion = 0;
+            score = 0;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            clearInterval(timerInterval);
+            timer = 40;
+            answered = false;
+            document.getElementById('timer').textContent = timer;
+            document.getElementById('timerBar').style.width = '100%';
+            document.getElementById('feedbackBox').classList.add('hidden');
+            document.getElementById('nextBtn').classList.add('hidden');
+
+            const q = questions[currentQuestion];
+            document.getElementById('questionCounter').textContent = `Questão ${currentQuestion + 1} de ${questions.length}`;
+            document.getElementById('scoreDisplay').textContent = `Pontos: ${score}`;
+            document.getElementById('questionText').innerText = q.question;
+            document.getElementById('questionContext').innerText = q.context;
+
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+
+            // Randomize options order slightly or render as is
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-4 rounded-xl bg-purple-950/40 border border-purple-900/60 hover:bg-purple-900/50 hover:border-purple-500 transition text-gray-200 font-cinzel text-sm md:text-base flex items-center justify-between group";
+                btn.innerHTML = `<span><strong class="text-purple-400 mr-2">${String.fromCharCode(65 + idx)}.</strong> ${opt.text}</span> <i class="fa-solid fa-chevron-right text-purple-600 group-hover:text-purple-400"></i>`;
+                btn.onclick = () => selectOption(idx, btn);
+                optionsContainer.appendChild(btn);
+            });
+
+            startTimer();
+        }
+
+        function startTimer() {
+            const timerBar = document.getElementById('timerBar');
+            timerInterval = setInterval(() => {
+                timer--;
+                document.getElementById('timer').textContent = timer;
+                timerBar.style.width = `${(timer / 40) * 100}%`;
+
+                if (timer <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeout();
+                }
+            }, 1000);
+        }
+
+        function handleTimeout() {
+            if (answered) return;
+            answered = true;
+            playSound('wrong');
+
+            const q = questions[currentQuestion];
+            const buttons = document.getElementById('optionsContainer').children;
+
+            q.options.forEach((opt, idx) => {
+                if (opt.isCorrect) {
+                    buttons[idx].classList.replace('bg-purple-950/40', 'bg-emerald-950/80');
+                    buttons[idx].classList.replace('border-purple-900/60', 'border-emerald-600');
+                }
+                buttons[idx].disabled = true;
+            });
+
+            const feedback = document.getElementById('feedbackBox');
+            feedback.className = "p-4 rounded-xl text-sm mb-4 border bg-red-950/60 border-red-800 text-red-200";
+            feedback.innerHTML = `<strong>Tempo esgotado!</strong> Nenhuma alternativa selecionada a tempo.<br><br><em>Explicação:</em> Ocorre que a opção correta era a destacada em verde.`;
+            feedback.classList.remove('hidden');
+
+            document.getElementById('nextBtn').classList.remove('hidden');
+        }
+
+        function selectOption(selectedIndex, btnElement) {
+            if (answered) return;
+            answered = true;
+            clearInterval(timerInterval);
+
+            const q = questions[currentQuestion];
+            const selectedOpt = q.options[selectedIndex];
+            const buttons = document.getElementById('optionsContainer').children;
+
+            // Disable all buttons
+            for (let btn of buttons) {
+                btn.disabled = true;
+            }
+
+            const feedback = document.getElementById('feedbackBox');
+
+            if (selectedOpt.isCorrect) {
+                score++;
+                playSound('correct');
+                btnElement.classList.replace('bg-purple-950/40', 'bg-emerald-950/80');
+                btnElement.classList.replace('border-purple-900/60', 'border-emerald-600');
+                
+                feedback.className = "p-4 rounded-xl text-sm mb-4 border bg-emerald-950/60 border-emerald-800 text-emerald-200";
+                feedback.innerHTML = `<strong>Resposta Correta!</strong> ${selectedOpt.rationale}`;
+            } else {
+                playSound('wrong');
+                btnElement.classList.replace('bg-purple-950/40', 'bg-red-950/80');
+                btnElement.classList.replace('border-purple-900/60', 'border-red-600');
+
+                // Highlight correct one
+                q.options.forEach((opt, idx) => {
+                    if (opt.isCorrect) {
+                        buttons[idx].classList.replace('bg-purple-950/40', 'bg-emerald-950/80');
+                        buttons[idx].classList.replace('border-purple-900/60', 'border-emerald-600');
+                    }
+                });
+
+                feedback.className = "p-4 rounded-xl text-sm mb-4 border bg-red-950/60 border-red-800 text-red-200";
+                feedback.innerHTML = `<strong>Resposta Incorreta.</strong> ${selectedOpt.rationale}`;
+            }
+
+            feedback.classList.remove('hidden');
+            document.getElementById('nextBtn').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                loadQuestion();
+            } else {
+                showGameOver();
+            }
+        }
+
+        function showGameOver() {
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+            document.getElementById('finalScore').textContent = `${score} / ${questions.length}`;
+
+            let msg = "";
+            if (score === 10) {
+                msg = "Perfeito! Você dominou completamente o Present Perfect e sobreviveu ao pesadelo gramatical!";
+            } else if (score >= 7) {
+                msg = "Bom trabalho! Você tem um ótimo entendimento das regras do Present Perfect.";
+            } else if (score >= 4) {
+                msg = "Você passou raspando. Revise os usos de 'have/has' e particípios passados na apresentação.";
+            } else {
+                msg = "Cuidado! Os fantasmas gramaticais te pegaram. É recomendável revisar os slides sobre Present Perfect.";
+            }
+            document.getElementById('finalMessage').textContent = msg;
+        }
+    </script>
+</body>
+</html>
+```eof
+
+### Resumo do Jogo Criado:
+* **Tema Sinistro & Imersivo:** Estilo visual escuro com tons de roxo profundo e vermelho sangue, além de um sintetizador de áudio integrado via Web Audio API que gera uma trilha ambiente de suspense (*Trilha Sinistra*) ao clicar em "Ligar Som".
+* **Cronômetro de 40 Segundos:** Cada questão possui uma contagem regressiva rigorosa de 40 segundos com barra de progresso visual.
+* **Conteúdo Direto da Apresentação:** Questões focadas nos quatro principais usos do Present Perfect (experiências de vida, períodos contínuos até agora, tempos inacabados, e estruturas como *It's the first time*), além do uso correto de verbos irregulares e auxiliares (*have/has*).
+
+Divirta-se jogando e bom estudo com o Present Perfect!
